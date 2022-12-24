@@ -34,6 +34,7 @@ void Ship::Switch::Init(SwitchPhase phase) {
             if (!hosversionBefore(8, 0, 0)) {
                 clkrstInitialize();
             }
+            padConfigureInput(8, HidNpadStyleSet_NpadStandard);
             break;
     }
 }
