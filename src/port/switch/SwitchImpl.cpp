@@ -5,6 +5,7 @@
 #include "SwitchPerformanceProfiles.h"
 #include "core/bridge/consolevariablebridge.h"
 #include "misc/Hooks.h"
+#include "Utils/StringHelper.h"
 
 #define DOCKED_MODE 1
 #define HANDHELD_MODE 0
@@ -12,7 +13,7 @@
 static AppletHookCookie applet_hook_cookie;
 static bool isRunning = true;
 static bool hasFocus = true;
-
+HidsysUniquePadId uniquePadIds[8];
 void DetectAppletMode();
 
 static void on_applet_hook(AppletHookType hook, void* param);
@@ -34,7 +35,10 @@ void Ship::Switch::Init(SwitchPhase phase) {
             if (!hosversionBefore(8, 0, 0)) {
                 clkrstInitialize();
             }
+            hidsysInitialize();
             padConfigureInput(8, HidNpadStyleSet_NpadStandard);
+            s32 total = 0; // unused
+            hidsysGetUniquePadIds(uniquePadIds, 8, &total);
             break;
     }
 }
@@ -121,6 +125,15 @@ void Ship::Switch::PrintErrorMessageToScreen(const char* str, ...) {
     }
 
     consoleExit(NULL);
+}
+
+char* Ship::Switch::GetControllerUUID(int controller) {
+    HidsysUniquePadSerialNumber serial;
+    hidsysGetUniquePadSerialNumber(uniquePadIds[controller], &serial);
+    char* cuid = serial.serial_number;
+    return SDL_strdup(strlen(cuid) >= 14 && cuid[0] == 'X' && cuid[1] == 'C'
+                          ? cuid
+                          : StringHelper::Sprintf("CID%d0000000000", controller).c_str());
 }
 
 static void on_applet_hook(AppletHookType hook, void* param) {
